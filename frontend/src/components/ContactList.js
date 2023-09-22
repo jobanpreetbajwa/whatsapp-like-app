@@ -2,6 +2,7 @@ import { styled } from "styled-components";
 import { AiOutlineSearch } from "react-icons/ai";
 import "./ContactList.css";
 import { DataInfo } from "./Data";
+import { Button } from "@mui/material";
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -94,12 +95,13 @@ const ContactComponent = (props) => {
   );
 };
 
-const ContactList = () => {
+const ContactList = (props) => {
   return (
     <>
       <Container>
         <ProfileInfo>
           <ProfileImage src="/profile/f1.jpeg"></ProfileImage>
+          <Button onClick={props.onLogout}>Logout</Button>
         </ProfileInfo>
         <SearchBar>
           <SearchConatiner>

@@ -3,6 +3,7 @@ import ContactList from "./components/ContactList";
 import ChatComponent from "./components/ChatComponent";
 import { LandingPage } from "./components/LandingPage";
 import { useAppContext } from "./store/AppContext";
+import { useState } from "react";
 
 const Container=styled.div`
 display:flex;
@@ -15,12 +16,21 @@ background:#f8f9fb;
 function App() {
 
   const {state} = useAppContext();
-  console.log("state",state.isLoggedIn)
+  
+  const [isLoggedIn,setLoggedIn] = useState(state.isLoggedIn);
+  const handleLogIn = (value) =>{
+    setLoggedIn(value);
+  } 
+
+  const handleLogout = ()=>{
+    setLoggedIn(false);
+    localStorage.removeItem('isLoggedIn')
+  }
 
   return <Container>
-    {!state.isLoggedIn && <LandingPage/>}
-    {state.isLoggedIn  && <ContactList/>}
-    {state.isLoggedIn && <ChatComponent/>}
+    {!isLoggedIn && <LandingPage onLogin={handleLogIn}/>}
+    {isLoggedIn  && <ContactList onLogout={handleLogout}/>}
+    {isLoggedIn && <ChatComponent/>}
   
   </Container>
 

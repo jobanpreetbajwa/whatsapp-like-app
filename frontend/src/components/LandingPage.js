@@ -15,7 +15,7 @@ const Login = styled.div`
   padding: 10px;
 `;
 
-export const LandingPage = () => {
+export const LandingPage = (props) => {
   const [number, setNumber] = useState();
   const [otp, setOtp] = useState();
   const [numberDisabled, setNumberdisabled] = useState(false);
@@ -35,6 +35,7 @@ export const LandingPage = () => {
    try { if ( buttonDisabled){
         const response = await axios.post(`${SERVER_URL}/verifyOtp`,{phoneNumber:number,otp})
         localStorage.setItem('isLoggedIn',true)
+        props.onLogin(true)
     }
     else {
        const response = await axios.post(`${SERVER_URL}/sendOtp`, {phoneNumber:number});
@@ -46,15 +47,6 @@ export const LandingPage = () => {
 
   return (
     <>
-      {/* <form >
-            <div  className='login-container'>
-            <label for="phone-number">Enter your number</label>
-            <input type="number" id="phone-number"  name='phone-number' onChange={numberHandler} disabled={numberDisabled}></input>
-            <button onClick={otpHandler} disabled={buttonDisabled}>Send OTP</button>
-            <label for="otp">Enter OTP</label>
-            <input type='number' id="otp" name='otp' disabled={otpDisabled}></input>
-            </div>
-        </form> */}
       <Login>
         Login
         <TextField
