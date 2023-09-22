@@ -9,7 +9,7 @@ const AppProvider = ({ children }) => {
   const initialState = {
     // Define your initial state properties here
     count: 0,
-    isLoggedIn: false
+    isLoggedIn: localStorage.getItem('isLoggedIn')
     // ...
   };
 
