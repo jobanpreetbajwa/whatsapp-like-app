@@ -1,6 +1,11 @@
 import { styled } from "styled-components";
 import { SearchConatiner } from "./ContactList";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { SERVER_URL } from "../constant";
+import moment from 'moment';
+
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -39,6 +44,7 @@ const SearchBar = styled.div`
   margin-left: 10px;
   background: #ededed;
   width: 100%;
+  border:none
 `;
 const EmojiImage = styled.div`
   width: 30px;
@@ -70,7 +76,50 @@ const Time = styled.div`
   font-size: 10px;
   text-align: end;
 `;
-const ChatComponent = () => {
+const ChatComponent = ({friendId}) => {
+
+  const currentUserId = localStorage.getItem("userId");
+
+  const [chat,setChat] = useState();
+  const [message,setMessage] = useState('');
+  const [chatId, setChatId] = useState('');
+
+  const sendMessage = ()=>{
+    try {
+      return axios.post(`${SERVER_URL}/sendMessage`,{
+        fromUserId: currentUserId,
+        toUserId: friendId,
+        message,
+        chatId
+      })
+    }
+    catch(error){
+
+    }
+  }
+
+  useEffect(()=>{
+
+    const getChat = async (friendId)=>{
+      const response = await axios.get(`${SERVER_URL}/getChat`,{
+       params: { currentUserId,friendId}
+      });
+   
+      setChat(response.data.chat)
+      setChatId(response.data.chatId)
+    }
+    getChat(friendId)
+  },[friendId])
+
+  const handleEnterKeyPress = async (e) => {
+    if (e.key === 'Enter') {
+     const res = await sendMessage()
+  
+     setChatId(res.data.chatId)
+     setMessage('')
+    }
+  };
+
   return (
     <>
       <Container>
@@ -79,19 +128,17 @@ const ChatComponent = () => {
           in ChatComponent
         </ProfileHeader>
         <MessageContainer>
-          <MessageDiv isyours={true}>
-            <Message>hello</Message>
-          </MessageDiv>
-          <MessageDiv isyours={true}>
-            <Message>
-              hello,how are you<Time>time</Time>
-            </Message>
-          </MessageDiv>
-          <MessageDiv isyours={false}>
-            <Message>
-              hello,how are you<Time>10:30pm</Time>
-            </Message>
-          </MessageDiv>
+          {chat && chat.map(item=>
+            {
+              const date = moment(item.createdAt);
+              const formattedTime = date.format('hh:mm A');
+              return <MessageDiv isyours={item.fromUserId === currentUserId}>
+              <Message>{item.message} <Time>{formattedTime}</Time></Message>
+            </MessageDiv>
+            }
+            
+          )}
+
         </MessageContainer>
         <ChatBox>
           <SearchConatiner>
@@ -99,7 +146,9 @@ const ChatComponent = () => {
               <HiOutlineEmojiHappy size={30} />
             </EmojiImage>
             <SearchBar>
-              <Input placeholder="Type a message here"></Input>
+              <Input placeholder="Type a message here" onChange={(e)=>setMessage(e.target.value)} 
+               onKeyPress={handleEnterKeyPress}
+              value = {message}></Input>
             </SearchBar>
           </SearchConatiner>
         </ChatBox>

@@ -46,7 +46,9 @@ export const LandingPage = (props) => {
           phoneNumber: number,
           otp,
         });
+        console.log("respo",response)
         localStorage.setItem("isLoggedIn", true);
+        localStorage.setItem("userId",response.data.userId)
         props.onLogin(true);
       } else {
         const response = await axios.post(`${SERVER_URL}/sendOtp`, {

@@ -1,27 +1,28 @@
 import React, { createContext, useContext, useReducer } from 'react';
 
-// Step 1: Create a context
 const AppContext = createContext();
 
-// Step 2: Create a provider component
+
 const AppProvider = ({ children }) => {
-  // Step 3: Create a reducer function to manage state updates
+
   const initialState = {
-    // Define your initial state properties here
-    count: 0,
-    isLoggedIn: localStorage.getItem('isLoggedIn')
-    // ...
+
+    isLoggedIn: localStorage.getItem('isLoggedIn'),
+    friends: [],
+    currentOpen: ''
+
   };
 
   const reducer = (state, action) => {
-    console.log("action",action);
+  
     switch (action.type) {
         
-      case 'INCREMENT':
-        return { ...state, count: state.count + 1 };
-      case 'DECREMENT':
-        return { ...state, count: state.count - 1 };
-      // Add more cases for different actions
+
+      case 'ADD_FRIENDS':
+        return { ...state, friends: action.friends,currentOpen:action.friends && action.friends.length>0 ? action.friends[0].friendId:''};
+
+      case 'SET_CURRENT_OPEN':
+        return { ...state, currentOpen: action.userId};
       default:
         return state;
     }

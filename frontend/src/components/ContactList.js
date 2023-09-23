@@ -2,7 +2,13 @@ import { styled } from "styled-components";
 import { AiOutlineSearch } from "react-icons/ai";
 import "./ContactList.css";
 import { DataInfo } from "./Data";
-import { Button } from "@mui/material";
+import { Button, TextField } from "@mui/material";
+import axios from "axios";
+import { SERVER_URL } from "../constant";
+import { useEffect, useState } from "react";
+import EditIcon from '@mui/icons-material/Edit';
+import { useAppContext } from "../store/AppContext";
+
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -15,6 +21,7 @@ const ProfileInfo = styled.div`
   flex-direction: row;
   background: #ededed;
   padding: 15px;
+  align-items: center
 `;
 const ProfileImage = styled.img`
   width: 40px;
@@ -85,22 +92,71 @@ const ContactComponent = (props) => {
   const data = props.data;
   return (
     <ContactItem>
-      <ProfileIcon src={data?.profilePic} />
+      <ProfileIcon src={'/profile/f1.jpeg'} />
       <ContactInfo>
-        <ContactName>{data?.name}</ContactName>
-        <Messages>{data?.localText}</Messages>
+        <ContactName>{data?.friendName}</ContactName>
+        {/* <Messages>{data?.localText}</Messages> */}
       </ContactInfo>
-      <Messages>{data?.lastTextTime}</Messages>
+      {/* <Messages>{data?.lastTextTime}</Messages> */}
     </ContactItem>
   );
 };
 
 const ContactList = (props) => {
+  const [userName,setUserName] = useState('')
+  const [currentUserId, setCurrentUserId] = useState(localStorage.getItem("userId"))
+  const [friendNumber,setFriendNumber] = useState('');
+
+  const {state,dispatch} = useAppContext();
+
+  useEffect(()=>{
+    const getUser = async (userId)=>{
+      try {
+        const res = await axios.get(`${SERVER_URL}/getUser/${userId}`);
+
+        dispatch({type:'ADD_FRIENDS',friends:res.data.friends})
+        setUserName(res.data.user.username)
+      }
+      catch(error){
+        
+      }
+    }
+    getUser(currentUserId)
+  },[])
+
+  const [isEditing,setIsEditing] = useState(true);
+
+  const addUser = async ()=>{
+      try{
+
+        const res = await axios.post(`${SERVER_URL}/addUser`,{
+          userId: currentUserId,
+          friendPhoneNumber:friendNumber
+        })
+        const response = await axios.get(`${SERVER_URL}/getUser/${currentUserId}`);
+
+        dispatch({type:'ADD_FRIENDS',friends:response.data.friends})
+      }
+      catch(error){
+
+      }
+  }
+
+  const handleOnClick = (userId)=>{
+    dispatch({type:'SET_CURRENT_OPEN',userId})
+  }
+
   return (
     <>
       <Container>
         <ProfileInfo>
           <ProfileImage src="/profile/f1.jpeg"></ProfileImage>
+          <TextField style={{padding: '5px'}} id="standard-basic" variant="standard" value={userName} disabled={isEditing}
+          onBlur={()=>{
+            setIsEditing(true)
+          }}
+          />
+          <EditIcon style={{cursor:'pointer'}} onClick={()=>setIsEditing(false)}/>
           <Button onClick={props.onLogout}>Logout</Button>
         </ProfileInfo>
         <SearchBar>
@@ -110,11 +166,16 @@ const ContactList = (props) => {
             <input
               className="searchbar "
               placeholder="search or start new chat"
+              onChange={(e)=>setFriendNumber(e.target.value)}
+              value = {friendNumber}
+              onBlur={addUser}
             ></input>
           </SearchConatiner>
         </SearchBar>
-        {DataInfo.map((item) => {
-          return <ContactComponent data={item}></ContactComponent>;
+        {state.friends && state.friends.map((item) => {
+          return <div onClick={() => handleOnClick(item.friendId)}>
+            <ContactComponent  data={item}></ContactComponent>
+          </div>;
         })}
       </Container>
     </>

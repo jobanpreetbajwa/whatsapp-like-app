@@ -30,7 +30,7 @@ function App() {
   return <Container>
     {!isLoggedIn && <LandingPage onLogin={handleLogIn}/>}
     {isLoggedIn  && <ContactList onLogout={handleLogout}/>}
-    {isLoggedIn && <ChatComponent/>}
+    {isLoggedIn && <ChatComponent friendId={state.currentOpen}/>}
   
   </Container>
 
