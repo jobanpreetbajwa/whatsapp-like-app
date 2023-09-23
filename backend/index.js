@@ -1,16 +1,20 @@
 const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
+const OTPAuth = require('./database/models/otpAuth');
+const mongoose = require("mongoose");
 
+mongoose.connect("mongodb://localhost/whatsapp", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Enable CORS for all routes
 app.use(cors());
 app.use(express.json());
 
-// Define a sample route
 app.get('/hello', (req, res) => {
     console.log("hello")
   res.json({ message: 'This is a sample route with CORS enabled!' });
@@ -21,7 +25,7 @@ const otps = {
 }
 
 function generateOTP(length) {
-    const chars = '0123456789'; // You can include more characters if needed
+    const chars = '0123456789';
     const otp = [];
     for (let i = 0; i < length; i++) {
       const randomIndex = crypto.randomInt(0, chars.length);
@@ -30,25 +34,27 @@ function generateOTP(length) {
     return otp.join('');
   }
   
-app.post('/sendOtp', (req,res)=>{
+app.post('/sendOtp', async (req,res)=>{
     try {
         const body = req.body;
         const otp = generateOTP(6);
 
         otps[body.phoneNumber] = otp;    
+        await OTPAuth.create({otp,phoneNumber:body.phoneNumber})
 
         res.status(200).send({message:'Otp Send Successfully',otp})
     }
     catch(error){
-
+      res.status(500).send({message:`Failed with error ${error.message}`})
     }
 })
 
-app.post('/verifyOtp', (req,res)=>{
+app.post('/verifyOtp', async (req,res)=>{
     try {
         const body = req.body;
-       
-        if (otps[body.phoneNumber] === body.otp){
+       const data = await OTPAuth.findOne({phoneNumber:body.phoneNumber}).select('otp');
+       console.log("saved",data)
+        if (data.otp === body.otp){
             res.status(200).send('Otp Verified Successfully')
         }
         else{
