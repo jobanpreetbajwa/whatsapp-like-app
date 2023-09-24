@@ -1,10 +1,11 @@
 import { styled } from "styled-components";
 import { SearchConatiner } from "./ContactList";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { SERVER_URL } from "../constant";
+import { SERVER_URL, WS_SERVER_URL } from "../constant";
 import moment from 'moment';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 const Container = styled.div`
   display: flex;
@@ -58,6 +59,7 @@ const MessageContainer = styled.div`
   flex-direction: column;
   background: #ece5dd;
   height: 100%;
+  overflow: scroll
 `;
 const MessageDiv = styled.div`
   display: flex;
@@ -76,6 +78,8 @@ const Time = styled.div`
   font-size: 10px;
   text-align: end;
 `;
+
+// const WebSocket = require('ws');
 const ChatComponent = ({friendId}) => {
 
   const currentUserId = localStorage.getItem("userId");
@@ -97,29 +101,67 @@ const ChatComponent = ({friendId}) => {
 
     }
   }
-
+  const getChat = async (friendId)=>{
+    const response = await axios.get(`${SERVER_URL}/getChat`,{
+     params: { currentUserId,friendId}
+    });
+ 
+    setChat(response.data.chat)
+    setChatId(response.data.chatId)
+  }
   useEffect(()=>{
-
-    const getChat = async (friendId)=>{
-      const response = await axios.get(`${SERVER_URL}/getChat`,{
-       params: { currentUserId,friendId}
-      });
-   
-      setChat(response.data.chat)
-      setChatId(response.data.chatId)
-    }
     getChat(friendId)
+
+
   },[friendId])
+  const [ws, setWs] = useState(null);
+   useEffect(() => {
+    const ws = new WebSocket(WS_SERVER_URL); // Replace with your server URL
+    setWs(ws);
+
+    ws.onopen = () => {
+      console.log('Connected to the WebSocket server');
+      ws.send(JSON.stringify({type:'join',userId:currentUserId}))
+    };
+
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      console.log("receieved",message)
+      if (message.type === 'message') {
+       getChat(friendId)
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('Disconnected from the WebSocket server');
+    };
+
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, []);
+
 
   const handleEnterKeyPress = async (e) => {
     if (e.key === 'Enter') {
      const res = await sendMessage()
-  
+     getChat(friendId)
      setChatId(res.data.chatId)
+     ws.send(JSON.stringify({type:'message',to: friendId,text:message}))
      setMessage('')
     }
   };
 
+  const messageContainerRef = useRef(null);
+
+  useEffect(() => {
+    // Scroll to the bottom of the chat container when chat updates
+    if (messageContainerRef.current) {
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+    }
+  }, [chat]);
   return (
     <>
       <Container>
@@ -127,7 +169,7 @@ const ChatComponent = ({friendId}) => {
           <ProfileImage src="/profile/f1.jpeg"></ProfileImage>
           in ChatComponent
         </ProfileHeader>
-        <MessageContainer>
+        <MessageContainer ref={messageContainerRef}>
           {chat && chat.map(item=>
             {
               const date = moment(item.createdAt);

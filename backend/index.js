@@ -8,14 +8,56 @@ const { generateOTP } = require('./utility');
 const Chats = require('./database/models/chats');
 const { v4: uuidv4 } = require('uuid');
 const Message = require('./database/models/messages');
+const WebSocket = require('ws');
 
+const app = express();
+
+const port = process.env.PORT || 3001;
+
+const server = app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+const wss = new WebSocket.Server({server});
+const clients = new Map();
+
+wss.on('connection', (ws,req) => {
+  console.log("Herer")
+  ws.on('message', (message) => {
+    
+    const data = JSON.parse(message);
+    console.log("messa",data)
+    if (data.type === 'join') {
+      const { userId } = data;
+      clients.set(userId, ws);
+      console.log(`User ${userId} connected`);
+    } else if (data.type === 'message') {
+      // Send a message to a specific user by their userId
+      const { to, text,userId } = data;
+      const toSocket = clients.get(to);
+      console.log("cleints",clients)
+      if (toSocket) {
+        toSocket.send(JSON.stringify({ type: 'message', from: userId, text }));
+      }
+    }
+  })
+  ws.on('close', () => {
+    // Handle user disconnection and remove them from the clients map
+    for (const [userId, socket] of clients.entries()) {
+      if (socket === ws) {
+        clients.delete(userId);
+        console.log(`User ${userId} disconnected`);
+        break;
+      }
+    }
+  });
+});
 mongoose.connect("mongodb://localhost/whatsapp", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
 
-const app = express();
-const port = process.env.PORT || 3000;
+
 
 app.use(cors());
 app.use(express.json());
@@ -26,7 +68,8 @@ app.post('/sendOtp', async (req,res)=>{
         const otp = generateOTP(6);
         const otpData = await OTPAuth.findOne({phoneNumber:body.phoneNumber});
         if (otpData){
-          await OTPAuth.findOneAndUpdate({otp,phoneNumber:body.phoneNumber})
+          console.log("herer")
+          await OTPAuth.findOneAndUpdate({phoneNumber:body.phoneNumber},{otp})
         }
        else{
         await OTPAuth.create({otp,phoneNumber:body.phoneNumber})
@@ -107,14 +150,14 @@ app.get('/getChat/', async (req,res)=>{
   
     const userId = req.query.currentUserId;
     const friendId = req.query.friendId;
-    console.log("res",userId,friendId)
+    // console.log("res",userId,friendId)
     const chat = await Chats.findOne({
       $and: [
         { users: { $all: [userId, friendId] } },
         { users: { $size: 2 } }, // Ensure that there are exactly 2 users in the chat (userId and friendId)
       ],
     })
-    console.log("chat",chat);
+    // console.log("chat",chat);
 
     if (!chat){
       return res.status(200).send({chat:[]})
@@ -130,7 +173,7 @@ app.get('/getChat/', async (req,res)=>{
 })
 
 app.post('/sendMessage',async (req,res)=>{
-  console.log("body",req.body)
+  // console.log("body",req.body)
   try {const {chatId, fromUserId, toUserId, message} = req.body;
 
     if (!chatId){
@@ -147,6 +190,5 @@ app.post('/sendMessage',async (req,res)=>{
     console.log("errror",error)
   }
 })
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+
+
