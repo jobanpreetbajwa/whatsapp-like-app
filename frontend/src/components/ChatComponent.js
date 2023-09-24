@@ -65,6 +65,7 @@ const MessageDiv = styled.div`
   display: flex;
   justify-content: ${(props) => (props.isyours ? "flex-end" : "flex-start")};
   margin: 5px 16px;
+ 
 `;
 const Message = styled.div`
   max-width: 50%;
@@ -73,6 +74,10 @@ const Message = styled.div`
   padding: 10px 10px;
   font-size: 14px;
   border-radius: 15%;
+  border-radius: ${(props) => (props.isyours ? "20px 20px 0px 20px" : "20px 20px 20px 0px")};
+  background-color: #fff;
+  box-shadow: -2px 2px 4px #dcdcdc;
+  width: fit-content
 `;
 const Time = styled.div`
   font-size: 10px;
@@ -161,7 +166,7 @@ const ChatComponent = ({friendId}) => {
     if (messageContainerRef.current) {
       messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
-  }, [chat]);
+  });
   return (
     <>
       <Container>
@@ -174,9 +179,13 @@ const ChatComponent = ({friendId}) => {
             {
               const date = moment(item.createdAt);
               const formattedTime = date.format('hh:mm A');
-              return <MessageDiv isyours={item.fromUserId === currentUserId}>
-              <Message>{item.message} <Time>{formattedTime}</Time></Message>
+              return <>
+              <MessageDiv isyours={item.fromUserId === currentUserId}>
+              <Message isyours={item.fromUserId === currentUserId}>{item.message} 
+              <Time>{formattedTime }</Time>
+              </Message>
             </MessageDiv>
+            </>
             }
             
           )}
