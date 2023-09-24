@@ -159,14 +159,12 @@ const ChatComponent = ({friendId}) => {
     }
   };
 
-  const messageContainerRef = useRef(null);
+  const messageRef = useRef(null);
 
   useEffect(() => {
     // Scroll to the bottom of the chat container when chat updates
-    if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
-    }
-  });
+    messageRef.current?.scrollIntoView();
+  },[chat]);
   return (
     <>
       <Container>
@@ -174,7 +172,7 @@ const ChatComponent = ({friendId}) => {
           <ProfileImage src="/profile/f1.jpeg"></ProfileImage>
           in ChatComponent
         </ProfileHeader>
-        <MessageContainer ref={messageContainerRef}>
+        <MessageContainer>
           {chat && chat.map(item=>
             {
               const date = moment(item.createdAt);
@@ -189,7 +187,7 @@ const ChatComponent = ({friendId}) => {
             }
             
           )}
-
+        <div ref={messageRef}/>
         </MessageContainer>
         <ChatBox>
           <SearchConatiner>
