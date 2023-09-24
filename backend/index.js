@@ -35,7 +35,7 @@ wss.on('connection', (ws,req) => {
       // Send a message to a specific user by their userId
       const { to, text,userId } = data;
       const toSocket = clients.get(to);
-      console.log("cleints",clients)
+      // console.log("cleints",clients)
       if (toSocket) {
         toSocket.send(JSON.stringify({ type: 'message', from: userId, text }));
       }
