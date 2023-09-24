@@ -86,7 +86,8 @@ export const LandingPage = (props) => {
         )}
         <ButtonContainer>
           <Button
-          style={{backgroundColor:'#19d261', color:'#FFFFFF'}}
+            
+          style={{backgroundColor: !phoneNumberRegex.test(number)? 'rgb(144 154 148)' : '#19d261', color:'#FFFFFF'}}
             variant="contained"
             disabled={!phoneNumberRegex.test(number)}
             onClick={handleSendOtp}

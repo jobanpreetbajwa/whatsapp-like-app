@@ -106,7 +106,7 @@ const ChatComponent = ({friendId}) => {
 
     }
   }
-  const getChat = async (friendId)=>{
+  const getChat = async ()=>{
     const response = await axios.get(`${SERVER_URL}/getChat`,{
      params: { currentUserId,friendId}
     });
@@ -115,38 +115,34 @@ const ChatComponent = ({friendId}) => {
     setChatId(response.data.chatId)
   }
   useEffect(()=>{
-    getChat(friendId)
-
-
+    getChat()
   },[friendId])
   const [ws, setWs] = useState(null);
    useEffect(() => {
     const ws = new WebSocket(WS_SERVER_URL); // Replace with your server URL
     setWs(ws);
 
-    ws.onopen = () => {
-      console.log('Connected to the WebSocket server');
-      ws.send(JSON.stringify({type:'join',userId:currentUserId}))
-    };
-
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      console.log("receieved",message)
-      if (message.type === 'message') {
-       getChat(friendId)
-      }
-    };
-
-    ws.onclose = () => {
-      console.log('Disconnected from the WebSocket server');
-    };
-
+  ws.onopen = () => {
+    console.log('Connected to the WebSocket server');
+    ws.send(JSON.stringify({type:'join',userId:currentUserId}))
+  };
+  ws.onclose = () => {
+    console.log('Disconnected from the WebSocket server');
+  };
+  ws.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+    console.log("receieved",message)
+    if (message.type === 'message') {
+      console.log("frined",friendId)
+     getChat()
+    }
+  };
     return () => {
       if (ws) {
         ws.close();
       }
     };
-  }, []);
+  }, [friendId]);
 
 
   const handleEnterKeyPress = async (e) => {

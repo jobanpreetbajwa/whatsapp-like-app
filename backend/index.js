@@ -26,7 +26,7 @@ wss.on('connection', (ws,req) => {
   ws.on('message', (message) => {
     
     const data = JSON.parse(message);
-    console.log("messa",data)
+    // console.log("messa",data)
     if (data.type === 'join') {
       const { userId } = data;
       clients.set(userId, ws);
